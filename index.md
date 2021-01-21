@@ -1,8 +1,7 @@
 ## python学习笔记
 
 
-###算法笔记
-
+### 算法笔记
 1.[并查集](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E5%B9%B6%E6%9F%A5%E9%9B%86.md)
 
 2.[链表逆置](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E9%93%BE%E8%A1%A8%E9%80%86%E7%BD%AE.md)
