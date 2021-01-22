@@ -1,6 +1,6 @@
 ## python学习笔记
 
-### python内置方法和一些基础知识
+### python内置方法和基础知识
 1.lambda匿名函数：可以不需要定义函数体快速简洁的实现一些功能，例如令列表中所有的数都平方：
 ````python
 lambda x: x*x,[y for y in range(10)]
@@ -69,6 +69,8 @@ foo(2)
 1.[并查集](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E5%B9%B6%E6%9F%A5%E9%9B%86.md)
 
 2.[链表逆置](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E9%93%BE%E8%A1%A8%E9%80%86%E7%BD%AE.md)
+
+3.[重构二叉树](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E9%87%8D%E6%9E%84%E4%BA%8C%E5%8F%89%E6%A0%91.md)
 
 
 
