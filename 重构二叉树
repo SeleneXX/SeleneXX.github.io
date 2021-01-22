@@ -1,0 +1,34 @@
+给出先序遍历序列和中序遍历序列，重构二叉树。例如给出：
+前序遍历 preorder = [3,9,20,15,7]，中序遍历 inorder = [9,3,15,20,7]
+先序遍历序列的第一个元素3必定是根结点，因为先序遍历总是先根再左再右。而中序遍历则是先左再根再右。所以只需要在中序遍历中找到根结点的位置，其左右两侧的数组必定是它的左右子树。[9][15, 20, 7]
+````pythont
+root_location = inorder.index(preinorder[0])
+left_kid_inorder = inorder[0: root_location]
+right_kid_inorder = inorder[root_location+1:]
+````
+这样就得到了根结点左右子树的中序遍历序列。而再先序遍历序列中，顺序是先根，再左，再右，所以只需要从根结点的后一个位置也就是位置1，遍历左孩子其中序遍历序列的长度，就可以得到左孩子的先序遍历序列，剩下的就是右孩子的先序遍历序列。[9][20, 15, 7]
+````python
+left_kid_preorder = preorder[1: root_location + 1]
+right_kid_preorder = preorder[root_location + 1 :]
+````
+这样，就分别得到了左右子树的先序遍历序列和中序遍历序列，此时，即可进行递归，把左右子树分别当作新的树，继续执行````buildTree````函数。
+完整代码如下：
+````python
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class Solution:
+    def buildTree(self, preorder: List[int], inorder: List[int]) -> TreeNode:
+        if preorder == []:
+            return None
+        root = TreeNode(preorder[0])
+        index = inorder.index(preorder[0])
+        root.left = self.buildTree(preorder[1: index + 1], inorder[: index]) #递归创建左子树
+        root.right = self.buildTree(preorder[index + 1:], inorder[index + 1:]) #递归创建右子树
+        return root
+````
+这是大二数据结构中学习的内容，当时学习了如何自己构建出树，这里是代码实现，使用了递归，很简洁。
