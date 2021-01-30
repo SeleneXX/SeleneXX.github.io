@@ -27,6 +27,10 @@
 
 6.[保证图可完全遍历](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/1579.md)
 
+7.[最长连续递增序列](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/674.md)
+
+8.[连通网络的操作次数](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/1319.md)
+
 
 ### django学习
 
