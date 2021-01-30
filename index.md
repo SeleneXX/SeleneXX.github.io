@@ -84,6 +84,8 @@ foo(2)
 
 4.[数组形式的整数加法](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/989.md)
 
+5.[水位上升的泳池中游泳](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/778.md)
+
 
 ### django学习
 
