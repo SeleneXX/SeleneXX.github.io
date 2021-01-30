@@ -23,7 +23,7 @@
 
 4.[数组形式的整数加法](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/989.md)
 
-5.[水位上升的泳池中游泳](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/778.md)
+5.[水位上升的泳池中游泳](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/778.md)//1631.最小体力消耗路径同理。
 
 6.[保证图可完全遍历](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/1579.md)
 
