@@ -31,6 +31,8 @@
 
 8.[连通网络的操作次数](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/1319.md)
 
+9.[等价多米诺骨牌对应的数量](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/1128.md)
+
 
 ### django学习
 
@@ -104,3 +106,28 @@ foo(2)
 4.对列表切片不会导致IndexError。对二维列表切片，若切片位置不存在，返回的是一维空列表[]。
 
 5.re模块实现正则功能，re.match(正则表达式, 字符串, [匹配模式])。正则表达式：````r'(.*)on(.*?).*'````，r代表后面的字符串是普通字符串，\n会被译为\和n而不是换行，（）包裹住的数据为需要提取的数据，通常与group()函数连用。````(.*)````匹配所有字符，````(.*?)````匹配到空格为止。group(1) = 第一个括号，group(2) = 第二个括号，group(0)代表原字符串。
+
+6.python中的序数表示为 real + imag j，其中real和imag都是浮点数。虚数部分必须后缀j或者J。方法conjugate返回共轭复数。
+
+7.运行一个模块时，__name__为__main__，但是在其他模块中import这个模块，__name__为其他模块的名称。例如以下为print_func.py的代码：
+````python
+print('Hello World!') 
+print('__name__ value: ', __name__)   
+def main():     
+    print('This message is from main function')   
+if __name__ == '__main__':     
+    main()   
+````
+以下为print_module.py的代码： 
+````python
+import print_func 
+print("Done!")
+````
+运行结果为Hello World! __ name__ value: print_func Done!因为是在print_module.py中import print_func.py，所以name不是main，不会执行if语句
+
+8.解码decode，编码encode，urllib为url编码。````urllib.quote(line.decode("gbk").encode("utf-16"))````的含义是，先对line进行gbk解码，然后进行utf16编码，最后进行url编码。所以经过该编码的字符串解码结果正相反，先进行url解码，然后解码utf-16，最后编码gbk
+
+9.python中的三元运算符使用不同于c和java的max = x > y ? x : y，而是max = x if x > y else y。
+
+10.random.random()方法的作用是生成0到1之间的随机浮点数。
+
