@@ -1,4 +1,5 @@
-## python学习笔记
+## 学习笔记
+以下代码全部使用python进行编写，相关知识也是python的知识
 
 
 
@@ -24,8 +25,16 @@
 
 5.[水位上升的泳池中游泳](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/778.md)
 
+6.[保证图可完全遍历](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/1579.md)
+
 
 ### django学习
+
+
+### 计网学习
+
+
+### 操作系统学习
 
 
 ### python内置方法和基础知识
