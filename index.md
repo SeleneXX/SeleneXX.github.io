@@ -11,6 +11,10 @@
 
 3.[重构二叉树](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E9%87%8D%E6%9E%84%E4%BA%8C%E5%8F%89%E6%A0%91.md)
 
+4.[深度优先遍历](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/dfs.md)
+
+5.[迪杰斯特拉算法](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/dijkstra.md)
+
 
 
 
@@ -32,6 +36,8 @@
 8.[连通网络的操作次数](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/1319.md)
 
 9.[等价多米诺骨牌对应的数量](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/1128.md)
+
+10.[相似字符串组](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/839.md)
 
 
 ### django学习
