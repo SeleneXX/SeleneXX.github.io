@@ -42,13 +42,6 @@
 11.[公平的糖果棒交换](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/888.md)
 
 
-### django学习
-
-
-### 计网学习
-
-
-### 操作系统学习
 
 
 ### python内置方法和基础知识
