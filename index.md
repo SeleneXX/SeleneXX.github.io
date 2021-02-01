@@ -41,6 +41,8 @@
 
 11.[公平的糖果棒交换](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/888.md)
 
+12.[剪绳子](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E5%89%91%E6%8C%87offer14.md)
+
 
 
 
@@ -131,4 +133,6 @@ print("Done!")
 9.python中的三元运算符使用不同于c和java的max = x > y ? x : y，而是max = x if x > y else y。
 
 10.random.random()方法的作用是生成0到1之间的随机浮点数。
+
+11.defaultdict的作用是，在字典调用时，如果所查找的key值不存在，那么将返回一个默认值。如defaultdict(list)将返回[]，defaultdict(int)将返回0等等。这一做法可以避免传统字典在调用时key值不存在时报错的问题。
 
