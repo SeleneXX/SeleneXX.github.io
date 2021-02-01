@@ -39,6 +39,8 @@
 
 10.[相似字符串组](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/839.md)
 
+11.[公平的糖果棒交换](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/888.md)
+
 
 ### django学习
 
