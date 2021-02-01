@@ -44,7 +44,10 @@
 12.[剪绳子](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E5%89%91%E6%8C%87offer14.md)
 
 
+### 操作系统
+1.[进程与线程](https://github.com/SeleneXX/SeleneXX.github.io/blob/main/%E8%BF%9B%E7%A8%8B%E4%B8%8E%E7%BA%BF%E7%A8%8B.md)
 
+2.[操作系统基本特征](https://github.com/SeleneXX/SeleneXX.github.io/blob/main/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%9F%BA%E6%9C%AC%E7%89%B9%E5%BE%81.md)
 
 ### python内置方法和基础知识
 1.lambda匿名函数：可以不需要定义函数体快速简洁的实现一些功能，例如令列表中所有的数都平方：
