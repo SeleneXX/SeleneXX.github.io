@@ -15,6 +15,8 @@
 
 5.[迪杰斯特拉算法](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/dijkstra.md)
 
+6.[滑动窗口算法](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3.md)
+
 
 
 
@@ -42,6 +44,8 @@
 11.[公平的糖果棒交换](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/888.md)
 
 12.[剪绳子](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E5%89%91%E6%8C%87offer14.md)
+
+13.[替换后的最长重复字符串](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/424.md)
 
 
 ### 操作系统
