@@ -17,6 +17,8 @@
 
 6.[滑动窗口算法](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3.md)
 
+7.[二进制平行算法(获取2进制数中1的个数)](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%B9%B3%E8%A1%8C%E7%AE%97%E6%B3%95.md)
+
 
 
 
