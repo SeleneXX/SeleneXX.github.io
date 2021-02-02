@@ -47,6 +47,8 @@
 
 13.[替换后的最长重复字符串](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/424.md)
 
+14.[剪绳子2](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E5%89%AA%E7%BB%B3%E5%AD%902.md)
+
 
 ### 操作系统
 1.[进程与线程](https://github.com/SeleneXX/SeleneXX.github.io/blob/main/%E8%BF%9B%E7%A8%8B%E4%B8%8E%E7%BA%BF%E7%A8%8B.md)
