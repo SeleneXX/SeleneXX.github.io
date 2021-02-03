@@ -19,6 +19,8 @@
 
 7.[二进制平行算法(获取2进制数中1的个数)](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%B9%B3%E8%A1%8C%E7%AE%97%E6%B3%95.md)
 
+8.[快速幂](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E5%BF%AB%E9%80%9F%E5%B9%82.md)
+
 
 
 
