@@ -53,6 +53,10 @@
 
 14.[剪绳子2](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E5%89%AA%E7%BB%B3%E5%AD%902.md)
 
+15.[打印从1到最大的n位整数](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/%E6%89%93%E5%8D%B0%E4%BB%8E1%E5%88%B0%E6%9C%80%E5%A4%A7%E7%9A%84n%E4%BD%8D%E6%95%B0.md)
+
+16.[滑动窗口中的位数](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/480.md)
+
 
 ### 操作系统
 1.[进程与线程](https://github.com/SeleneXX/SeleneXX.github.io/blob/main/%E8%BF%9B%E7%A8%8B%E4%B8%8E%E7%BA%BF%E7%A8%8B.md)
