@@ -57,6 +57,8 @@
 
 16.[滑动窗口中的位数](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/480.md)
 
+17.[子数的最大平均数](https://github.com/SeleneXX/SeleneXX.github.io/blob/gh-pages/643.md)
+
 
 ### 操作系统
 1.[进程与线程](https://github.com/SeleneXX/SeleneXX.github.io/blob/main/%E8%BF%9B%E7%A8%8B%E4%B8%8E%E7%BA%BF%E7%A8%8B.md)
