@@ -7308,3 +7308,24 @@ def order_delete(request):
     return JsonResponse({'status': True})
 ````
 
+#### 9.14.4 订单编辑
+
+取数据库获取对象/字典：
+
+````python
+# 对象，当前行所有数据
+row_obj = models.Order.objects.filter(id=uid).first()
+
+# 对应字段的字典 {"id": xx, "title": xx}
+row_dict = models.Order.objects.filter(id=uid).values("id", "title").first()
+
+# queryset，所有符合条件的数据组成的集合 [obj, obj, obj]
+query_set = models.Order.objects.filter(id=uid).all()
+
+# queryset，所有符合条件的对应字段的字典的集合 [{"id": xx, "title": xx}, {"id": xx, "title": xx}]
+row_dict = models.Order.objects.filter(id=uid).values("id", "title").all()
+
+# queryset，所有符合条件的对应字段的值和idx的元组的集合 [(1, "xx"), (2, "xx")]
+row_dict = models.Order.objects.filter(id=uid).values_list("id", "title").all()
+````
+
