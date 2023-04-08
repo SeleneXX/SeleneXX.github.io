@@ -86,10 +86,9 @@ DRF重构了View方法，修改了post请求的request，使得JSON可以传入�
   	delete		-->删除单个资源
   	put			-->更新单个资源
   	patch		-->更新单个资源
+    DRF使用restful接口，在定义一个页面时，在urls中新建两个path，一个针对全部数据，一个针对一条数据。
   ````
-
-  DRF使用restful接口，在定义一个页面时，在urls中新建两个path，一个针对全部数据，一个针对一条数据。
-
+  
   ```python
   from django.urls import path, re_path
   from drfdemo import views
@@ -101,11 +100,7 @@ DRF重构了View方法，修改了post请求的request，使得JSON可以传入�
   ]
   ```
 
-  
-
 - RPC：远程过程调用。以动作为主的api接口规范。从字面上理解就是访问/调用远程服务端提供的api接口。
-
-
 
 ## 4. 序列化和反序列化
 
