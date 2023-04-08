@@ -88,11 +88,213 @@ DRF重构了View方法，修改了post请求的request，使得JSON可以传入�
   	patch		-->更新单个资源
   ````
 
+  DRF使用restful接口，在定义一个页面时，在urls中新建两个path，一个针对全部数据，一个针对一条数据。
+
+  ```python
+  from django.urls import path, re_path
+  from drfdemo import views
+  
+  urlpatterns = [
+      # path("admin/", admin.site.urls),
+      path("student/", views.StudentView.as_view()),						# 针对全部数据
+      re_path("student/(\d+)/", views.StudentDetailView.as_view()),		# 针对一条数据，传入对应的id
+  ]
+  ```
+
   
 
 - RPC：远程过程调用。以动作为主的api接口规范。从字面上理解就是访问/调用远程服务端提供的api接口。
 
-  
 
 
+## 4. 序列化和反序列化
+
+#### 原始方式
+
+首先，创建序列化类，在其中自定义需要序列化的字段。
+
+```python
+from rest_framework.views import APIView
+from rest_framework import serializers
+# 引入DRF中的response代替传统的HttpResponse
+from rest_framework.response import Response
+from drfdemo.models import Student
+
+
+# Create your views here.
+
+class StudentSerializer(serializers.Serializer):
+    student_name = serializers.CharField(source="name")		# 如果想要修改Json中的键名，需要指定source="xxx"去找数据库中的字段
+    sex = serializers.BooleanField()
+    age = serializers.IntegerField()
+    class_null = serializers.CharField(required=False)		# required=False表示可以为空，即校验时，可以没有这个字段
+```
+
+serializers.Serializer包含几个关键的初始化值：
+
+- instance：序列化时，传入需要序列化的对象
+- data：反序列化时，传入需要反序列化的数据
+- many：当序列化时传入的对象是queryset，里面包含了很多数据对象，将其置为True，代表全都序列化
+
+DRF中的Response可以处理Json格式
+
+序列化一个集合对象，用于展示全部数据库所有数据：
+
+```python
+class StudentView(APIView):
+
+    def get(self, request):
+        students = Student.objects.all()
+        serializer = StudentSerializer(instance=students, many=True)
+        return Response(serializer.data)
+```
+
+反序列化post请求中的json数据。使用序列化器中的`is_valid()`接口，判断数据是否合法。这里要保证构建序列化器时，数据字段的定义和数据库中的定义保持一致，保证两者合法性的相同。
+
+可以使用传统的if else来判断合法并保存。这里使用官方文档中的写法，`is_valid()`中传入参数`raise_exception=True`，使其在检测有误时报错，使用try except语句接收这条错误并返回错误信息。
+
+保存时，可以直接从序列化器中，拿到合法的数据对象`validated_data`，使用`create`在数据库中新建一行，并把这新建对象序列化为Json数据返回给前端。
+
+```python
+class StudentView(APIView):
+
+    def get(self, request):
+        students = Student.objects.all()
+        serializer = StudentSerializer(instance=students, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializers = StudentSerializer(data=request.data)
+        try:
+            serializers.is_valid(raise_exception=True)
+            # 插入记录
+            stu = Student.objects.create(**serializers.validated_data)
+            ser = StudentSerializer(instance=stu, many=False)
+            return Response(ser.data)
+
+        except Exception as e:
+            print(e)
+            return Response(serializers.errors)
+        
+        # if serializers.is_valid():
+        #     # 存入数据库
+        #     pass
+        # else:
+        #     # 错误
+        #     return Response(serializers.errors)
+```
+
+删除使用delete请求，更新使用put请求。
+
+```python
+class StudentDetailView(APIView):
+
+    def get(self, request, id):
+        # 查询一条数据
+        students = Student.objects.get(pk=id)
+        serializer = StudentSerializer(instance=students, many=False)
+        return Response(serializer.data)
+
+    def delete(self, request, id):
+        # 删除一条数据
+        Student.objects.get(pk=id).delete()
+        return Response()
+
+    def put(self, request, id):
+        # 更新一条数据
+        serializers = StudentSerializer(data=request.data)
+        try:
+            serializers.is_valid(raise_exception=True)
+            # 更新记录
+            # 这里不能用stu接收update方法的返回值，因为update返回的是更新的条目，而create返回的是插入的对象
+            Student.objects.filter(pk=id).update(**serializers.validated_data)
+            # 手动获取更细的数据
+            stu = Student.objects.get(pk=id)
+            ser = StudentSerializer(instance=stu, many=False)
+            return Response(ser.data)
+
+        except Exception as e:
+            print(e)
+            return Response(serializers.errors)
+```
+
+#### 进阶方式
+
+使用`serializer.save()`，将原来复杂的写入和新增逻辑解耦，封装到已经定义好的方法内。
+
+save方法通过serializer中传入的有没有instance来判断，是插入还是修改数据。插入数据时，没有instance，所以选择插入数据，调用一个create方法，在serializer中的父类里，create方法只弹出一个异常，告诉你需要自己重写create方法来指定需要插入数据的表。
+
+```python
+class StudentSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    sex = serializers.BooleanField()
+    age = serializers.IntegerField()
+    class_null = serializers.CharField()
+
+    def create(self, validated_data):
+        # 将数据插入表
+        new_student = Student.objects.create(**validated_data)
+        return new_student
+```
+
+这样，在插入数据时，只需要使用`serializer.save()`
+
+```python
+    def post(self, request):
+        serializers = StudentSerializer(data=request.data)
+        try:
+            serializers.is_valid(raise_exception=True)
+            # 插入记录
+            serializers.save()
+            return Response(serializers.data)
+
+        except Exception as e:
+            print(e)
+            return Response(serializers.errors)
+```
+
+同理，新增数据，要同时传入更新的对象instance。只有queryset对象可以update，而如果传入queryset，序列化器会自动解包。所以必须传入单个对象，从数据库根据主键重新取queryset然后update。
+
+```python
+class StudentSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    sex = serializers.BooleanField()
+    age = serializers.IntegerField()
+    class_null = serializers.CharField()
+
+    def create(self, validated_data):
+        new_student = Student.objects.create(**validated_data)
+        return new_student
+
+    def update(self, instance, validated_data):
+        Student.objects.filter(pk=instance.pk).update(**validated_data)
+        updated_students = Student.objects.get(pk=instance.pk)
+        return updated_students
+```
+
+```python
+class StudentDetailView(APIView):
+
+    def get(self, request, id):
+        students = Student.objects.get(pk=id)
+        serializer = StudentSerializer(instance=students, many=False)
+        return Response(serializer.data)
+
+    def delete(self, request, id):
+        Student.objects.get(pk=id).delete()
+        return Response()
+
+    def put(self, request, id):
+        student = Student.objects.get(pk=id)
+        serializers = StudentSerializer(instance=student, data=request.data)
+        try:
+            serializers.is_valid(raise_exception=True)
+            # 更新记录
+            serializers.save()
+            return Response(serializers.data)
+
+        except Exception as e:
+            print(e)
+            return Response(serializers.errors)
+```
 
