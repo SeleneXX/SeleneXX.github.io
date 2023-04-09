@@ -161,29 +161,389 @@ func()
 
   ```python
   import re
-  text = "dingdalao niu bi."
+  text = "dingdalao niu bi"
   data_list = re.findall("dingdalao", text)
-  print(data_list)			# 声称列表["dingdalao"]
+  print(data_list)			# 生成列表["dingdalao"]
   ```
 
 - 提取文本中所有的a或b或c
 
   ```python
-  text = "dingdalao niu bi."
+  text = "dingdalao niu bi"
   data_list = re.findall("[abc]", text)
-  print(data_list)			# 声称列表['a', 'a', 'b']
-  
+  print(data_list)			# 生成列表['a', 'a', 'b']
   ```
-
+  
   提取文本中所有的da，db，dc
+  
+  ```python
+  text = "dingdalao niu bi"
+  data_list = re.findall("d[abc]", text)
+  print(data_list)			# 生成列表['da']
+  ```
+  
+- 匹配除了abc以外的字符
 
   ```python
-  text = "dingdalao niu bi."
-  data_list = re.findall("d[abc]", text)
-  print(data_list)			# 声称列表['da']
+  text = "dingdalao niu bi"
+  data_list = re.findall("[^abc]", text)
+  print(data_list)			# 生成列表['d', 'i', 'n', 'g', 'd', 'l', 'o', 'n', 'i', 'u', 'i']
+  ```
+  
+- 匹配范围中的任意字符
+
+  ```python
+  text = "ta1tb2tc3"
+  data_list = re.findall("t[a-z]", text)
+  print(data_list)		# 生成列表['ta', 'tb', 'tc']
+  ```
+  
+- `.`代指除了换行符的任意一个字符（包括空格）
+
+  ```python
+  text = "raoroo"
+  data_list = refindall("r.o", text)
+  print(data_list)		# 生成列表['rao', 'roo']
+  ```
+  
+  贪婪匹配，+代表一次或多次，能匹配长的就匹配长的
+  
+  ```python
+  text = "rao123123roo"
+  data_list = refindall("r.+o", text)
+  print(data_list)		# 生成列表['rao123123roo']
+  ```
+  
+  非贪婪匹配，匹配最近的最短的
+  
+  ```python
+  text = "rao123123roo"
+  data_list = refindall("r.+?o", text)
+  print(data_list)		# 生成列表['rao']
+  ```
+  
+- `\w`代表字母（汉字）或者数字或者下划线
+
+  ```python
+  text = "123a丁大佬牛逼b"
+  data_list = refindall("a\w+b", text)
+  print(data_list)		# 生成列表['a丁大佬牛逼b']
   ```
 
+  如果字符串中有空格，则当成多个字符串分别匹配。
+
+  ```python
+  text = "abdadc abdc"
+  data_list = re.findall("a\w+c")
+  print(data_list)		# 生成列表['abdabc', 'abdc']
+  ```
+
+- `\d`代表数字
+
+  ```python
+  text = "a123a丁大佬牛逼c1231"
+  data_list = re.findall("\w\d+\w", text)
+  print(data_list)		# 生成列表['a123a', 'c1231']
+  ```
+
+- `\s`代表任意空白符，包括空格和制表符
+
+  ```python
+  text = "123 234 456 "
+  data_list = re.findall("\w+\s\w+", text)
+  print(data_list)		# 生成列表['123 234']
+  ```
+
+### 2. 数量相关
+
+- `*`重复0次或多次
+
+- `+`重复1次或多次
+
+- `?`重复0次或1次，和`+`后面的问号含义不一样。
+
+- `{n}`重复n次
+
+  ```python
+  text = "123234456 "
+  data_list = re.findall("123\d{6}", text)
+  print(data_list)		# 生成列表['123234456']
+  ```
+
+- `{n,}`重复多于n次
+
+  ```python
+  text = "123234456 "
+  data_list = re.findall("\d{6,}", text)
+  print(data_list)		# 生成列表['123234456']
+  ```
+
+- `{n, m}`重复n到m次
+
+### 3. 括号（分组）
+
+- 不影响匹配的规则，改变提取数据的区域，根据所有要求去匹配对应的字符串，但是只输出括号内部的匹配的值
+
+  ```python
+  text = "123234456 "
+  data_list = re.findall("123(\d{6})", text)
+  print(data_list)		# 生成列表['234456']
+  ```
+
+  多个括号(匹配到的同一字符串内的分组写入一个元组)
+
+  ```python
+  text = "123234456 123123123"
+  data_list = re.findall("(12)3(\d{6})", text)
+  print(data_list)		# 生成列表[('12', '234456'), ('12', '123123')]
+  ```
+
+  括号内套括号
+
+  ```python
+  text = "123234456 "
+  data_list = re.findall("1(23(\d{6}))", text)
+  print(data_list)		# 生成列表['23234456', '234456']
+  ```
+
+- 提取指定区域+或条件
+
+  ```python
+  text = "123234456,12323dingdalaoniubi"
+  data_list = re.findall("12323(\d{4}|d\w+u)", text)
+  print(data_list)		# 生成列表['4456', 'dingdalaoniu']
+  ```
+
+  先提取全部符合的字符，再提取其中某一部分
+
+  ```python
+  text = "123234456,12323dingdalaoniubi"
+  data_list = re.findall("(12323(\d{4}|d\w+u))", text)
+  print(data_list)		# 生成列表['4456', 'dingdalaoniu']# [('123234456', '4456'), ('12323dingdalaoniu', 'dingdalaoniu')]
+  ```
+
+### 4. 起始和结束
+
+- 起始符`^`：用户输入必须严格以指定要求开头
+- 结束符`$`：用户输入必须严格以指定要求结尾
+
+### 5. 示例
+
+- 匹配qq号，不能由0开头，至少有5位
+
+  ```python
+  "[0-9]\d{4,}"
+  ```
+
+- 匹配身份证号，共18位，前17位数字，最后一位是数字或者大写的X
+
+  ```python
+  "\d{17}[\dX]"
+  ```
+
+  匹配身份证号，并提取最后一位
+
+  ```python
+  "(\d{17}(\d|X)"
+  ```
+
+  提取地区码6位，年4位月2位日2位
+
+  ```python
+  "(\d{6})(\d{4})(\d{2})(\d{2})\d{3}[\dX]"
+  ```
+
+- 匹配11位手机号，第一位是1，第二位为3到9
+
+  ```python
+  "1[3-9]\d{9}"
+  ```
+
+- 匹配邮箱xxxx@xx.xxx。点需要转译。
+
+  ```python
+  "[a-zA-z0-9_-]+@[a-zA-z0-9_-]+\.[a-zA-z0-9_-]+"
+  ```
+
+## 6. 迭代器和生成器
+
+### 迭代器定义：
+
+- 类中定义了`__iter__`和`__next__`方法
+- `__iter__`方法返回对象本身self
+- `__next__`方法返回下一个数据，如果没有数据了，则抛出stopiteration异常
+
+迭代器类
+
+```python
+class IT(objects):
+  def __init__(self):
+    self.counter = 0
+    
+  def __iter__(self):
+    return self
   
+  def __next__(self):
+    self.counter += 1
+    if self.counter == 3:
+      raise StopIteration()
+    return self.counter
+```
 
+迭代时，有两种方法：
 
+- 使用`IT.__next__()`
+- 使用python内部函数`next(IT)`
+
+支持for循环：
+
+```python
+obj2 = IT()
+for item in obj2:				# 首先或执行迭代器对象__iter__方法并获取返回值，反复执行next(对象)直到终止
+  print(item)
+```
+
+### 生成器定义：
+
+生成器是一种特殊的迭代器
+
+```python
+# 创建生成器函数
+def func():
+  yield 1
+  yield 2
+  
+obj = func()
+for item in obj:
+  print(item)
+```
+
+yield出现在函数内部时，函数自动转化为生成器对象。yield类似return。它的作用是，当函数执行到yield，会抛出当前的值，然后停在yield这一行。执行next方法后，接着上次停止的地方，继续执行。
+
+```python
+def foo():
+  while True:
+    res = yield 4
+    print("res:", res)
+    
+obj1 = foo()
+print(next(obj1))						# 停在yield这一行，返回4
+print(obj1.send(7))					# send方法传入一个数据代替刚刚停在的yield部分，并包含next方法，继续执行直到碰到下一个yield。
+# 先打印 res: 7，再继续执行，返回4并输出
+```
+
+### 可迭代对象：
+
+一个类中有`__inter__`方法并且该方法返回一个迭代器对象，则称这个类为可迭代对象，可以被for循环。
+
+```python
+class Foo(object):
+  
+  def __iter__(self):
+    return iteratorObject
+  
+obj = Foo()
+for item in obj:			# 内部执行该对象的__iter__，获取到的返回值是一个迭代器对象，不断执行该迭代器对象的next方法
+  print(item)
+```
+
+### Python3中的range函数
+
+`range()`创建了一个可迭代对象，而不是直接生成一个列表。代替了python2中的xrange。舍弃了原来直接生成列表的range，因为非常浪费空间。
+
+使用生成器实现range方法
+
+```python
+class Xrange(object):
+  
+  def __init__(self, max_num):
+    self.max_num = max_num
+   
+ 	def __iter__(self):
+    counter = 0
+    while counter < self.max_num:
+      yield counter
+			counter += 1
+      
+      
+obj = Xrange(100)
+for item in obj:
+  print(item)
+# 输出0到99
+```
+
+### Python中的可迭代对象：
+
+- 列表
+- 元组
+- 字典
+- 集合
+
+## 7. 进程和线程
+
+### 线程：
+
+计算机中可被CPU调度的最小单元
+
+### 进程：
+
+计算机中分配资源的最小单元
+
+一个程序，至少有一个进程，一个进程中至少有一个线程，最终是线程在工作。
+
+### 多线程：
+
+使用`threading`模块。创建多个线程，同时下载列表中的文件
+
+```python
+import threading
+import request
+import time
+
+url_list = [xxx, xxx, xxx]			# 下载资源的url列表
+
+def task(filename, url):
+  res = request.get(video_url)
+  with open(filename, mode="wb") as f:
+    f.write(res.content)
+  print(time.time())
+  
+print(time.time())
+for name url in url_list:
+  # 创建线程，使用的函数为target，传入函数的参数单独写出来为args
+  t = threading.Thread(target=task, args=(name, url))
+  # 线程开始工作
+  t.start()
+```
+
+### 多进程：
+
+使用`multiprocessing`模块。创建多个进程，同时下载列表中的文件。使用多进程时，一定要把多进程创建的部分包裹在name==main中，多线程也推荐放入。python底层多于不同操作系统创建进程的不一样。
+
+```python
+import multiprocessing
+import request
+import time
+
+url_list = [xxx, xxx, xxx]			# 下载资源的url列表
+
+def task(filename, url):
+  res = request.get(video_url)
+  with open(filename, mode="wb") as f:
+    f.write(res.content)
+  print(time.time())
+  
+  
+if __name__ == "__main__":
+print(time.time())
+  for name url in url_list:
+    # 创建进程，使用的函数为target，传入函数的参数单独写出来为args
+    t = multiprocessing.Process(target=task, args=(name, url))
+    # 进程开始工作
+    t.start()
+```
+
+多进程理论上开销更大
+
+### GIL锁
 
