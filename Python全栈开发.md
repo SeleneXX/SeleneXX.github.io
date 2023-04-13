@@ -7329,3 +7329,257 @@ row_dict = models.Order.objects.filter(id=uid).values("id", "title").all()
 row_dict = models.Order.objects.filter(id=uid).values_list("id", "title").all()
 ````
 
+## 10. Json Web Token
+
+JWT, 一般用于前后端分离项目的用户认证
+
+### 10.1 Token
+
+传统token方法，使用uuid生成随机字符串，作为token发送给用户，并存在对应用户的数据库。用户发请求的时候，带上token，去数据库进行校验
+
+```python
+import uuid
+
+class LoginView(APIView):
+    
+    def post(self, request, *args, **kwargs):
+        user = request.data.get("username")
+        pwd = request.data.get('pwd')
+        
+        user_object = models.UserInfo.objects.filter(username=user, password=pwd).first()
+        if not user_object:
+            return Response({'code': 1000, 'error': '用户名或密码错误'})
+        # 使用uuid生成随机字符串，存入数据库并传给用户
+        random_string = str(uuid.uuid4())
+        user_object.token = random_string
+        user_object.save()
+        return Response({'code': 1001, 'data': random_string})    
+    
+    
+class OrderView(APIView):
+    
+    def get(self, request, *args. **kwargs):
+        # 用户带着token来访问
+        token = request.query_params.get("token")
+        if not token:
+            return Response({'code': 2000, 'error': "请登录"})
+        user_object = models.UserInfo.objects.filter(token=token).first()
+        if not user_object:
+            return Response({'code': 2000, 'error': 'token无效'})
+       	return Response('订单列表')
+```
+
+### 10.2 JWT
+
+服务端给用户返回token，服务端不需要保存。客户端携带token来访问服务端，服务端进行校验。
+
+优势：
+
+- 无需在服务端保存
+
+实现原理:
+
+- 用户提交用户名和密码给服务端，服务端使用jwt创建一个token，返回给客户端。jwt生成的token，是一个由`.`拼接起来的3个字符串：
+
+  - 第一段字符串Header：
+
+    - 加密算法（默认SHA256）：`"alg": "HS256"`
+
+    - token类型：`"typ": "JWT"`
+
+    由json格式转化为字符串，然后做base64url编码，可以被解码
+
+  - 第二段字符串Payload，自定义，一般可以是:
+
+    - `"id": "123123"`
+    - `"name": "Selene"`
+    - 超时时间`"exp": 123412`
+
+    由json格式转化为字符串，然后做base64url编码，可以被解码（不要返回敏感信息：密码等）
+
+  - 第三段字符串为：
+
+    - 编码后的第一，二段字符串用`.`拼接后
+    - 对这个得到的字符串进行第一段Header中设定的算法的加密（SHA256）。加密前需要对字符串加盐（可以使用django.settings.Secret_Key），防止用户自行加密得到合法token。
+    - 对加密后的字符串，进行一次base64url编码
+
+- 以后用户再来访问，需要携带token，后端对token进行校验
+
+  - 获取token
+  - 对token按`.`分割
+  - 对第二段进行base64url解码，获取payload信息并检测是否超时
+  - 第1，2段拼接加盐再次进行SHA256加密，得到的密文和第3段进行base64url解码结果对比。如果相等，认证通过。
+
+```python
+import jwt
+import datetime
+from jwt import exceptions
+from django.conf import settings
+
+class JwtLoginView(APIView):
+    
+    def post(self, request, *args, **kwargs):
+        user = request.data.get("username")
+        pwd = request.data.get('pwd')
+        
+        user_object = models.UserInfo.objects.filter(username=user, password=pwd).first()
+        if not user_object:
+            return Response({'code': 1000, 'error': '用户名或密码错误'})
+        # 构造header
+        headerrs = {
+            'alg': 'HS256',
+            'typ': 'jwt'
+        }
+        # 构造payload
+        payload = {
+            'user_id': user_object.pk,
+            'user_name': user,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=5)		# 超时时间设置
+        }
+        salt = settings.SECRET_KEY
+        token = jwt.encode(payload=payload, key=salt, algorithm="HS256", headers=headers).encode('utf-8')
+        return Response({'code': 1001, 'data': token})
+    
+    
+class JwtOrderView(APIView):
+    
+    def get(self, request, *args. **kwargs):
+        # 获取token并判断合法性
+        token = request.query_params.get("token")
+        # 1. 切割
+        # 2. 解密第二段/判断过期
+        # 3. 验证第三段合法性
+        salt = settings.SECRET_KEY
+        try:
+        	verified_paylaod = jwt.decode(token, salt, True)
+            return verified_payload
+        except exceptions.ExpiredSignatureError:
+            msg = 'token已失效'
+        except jwt.DecodeError:
+            msg = 'token认证失败'
+        except jwt.InvalidTokenError:
+            msg = '非法的token'
+        if not payload:
+            return Response({'code': 1003, 'error': msg})
+        return Response('订单列表')
+```
+
+### 10.3 进阶方法
+
+将加密解密功能解耦。
+
+加密：
+
+```python
+import datetime
+import jwt
+from django.conf import settings
+
+def create_token(payload, timeout=1):
+	salt = settings.SECRET_KEY
+    headerrs = {
+        'alg': 'HS256',
+        'typ': 'jwt'
+    }
+    payload['exp'] = datetime.datetime.utcnow() + datetime.timedelta(minutes=timeout)		# 超时时间设置
+    token = jwt.encode(payload=payload, key=salt, algorithm="HS256", headers=headers).encode('utf-8')
+    return token
+```
+
+之后，直接在生成token时调用这个方法
+
+```python
+class JwtLoginView(APIView):
+    
+    def post(self, request, *args, **kwargs):
+        user = request.data.get("username")
+        pwd = request.data.get('pwd')
+        
+        user_object = models.UserInfo.objects.filter(username=user, password=pwd).first()
+        if not user_object:
+            return Response({'code': 1000, 'error': '用户名或密码错误'})
+         payload = {
+            'user_id': user_object.pk,
+            'user_name': user
+        }
+        token = creat_token(payload)
+        return Response({'code': 1001, 'data': token})
+```
+
+解密：
+
+```python
+from rest_framework.authentication import BaseAuthentication
+from django.conf import settings
+from rest_framework.exceptions import AuthenticationFailed
+import jwt
+
+class JwtQueryParamsAuthentication(BaseAuthentication):
+    
+    def authenticate(self, request):
+        token = request.query_params.get("token")
+        salt = settings.SECRET_KEY
+        try:
+        	paylaod = jwt.decode(token, salt, True)
+        # 如果验证不通过，抛出异常
+        except exceptions.ExpiredSignatureError:
+            raise AuthenticationFailed({'code': 1003, 'error': 'token已失效'})
+        except jwt.DecodeError:
+            raise AuthenticationFailed({'code': 1003, 'error': 'token认证失败'})
+        except jwt.InvalidTokenError:
+            raise AuthenticationFailed({'code': 1003, 'error': '非法的token'})
+		# 验证通过，返回payload和token
+        return (paylaod, token)
+```
+
+之后，可以在定义视图类时，定义类变量，效果类似中间件，如果抛出异常，则不会进入页面渲染阶段
+
+```python
+class JwtOrderView(APIView):
+    
+    authentication_classes = [JwtQueryParamsAuthentication, ]
+    
+    def get(self, request, *args. **kwargs):
+        
+        return Response('订单列表')
+```
+
+也可以不定义类变量。在setting.py中加上一段，设置默认验证类为自定义类。这样，APIView类中的默认验证，就会变成自定义的方法。
+
+```python
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": ['api.extensions.auth.JwtQueryParamsAuthentication', ]
+}
+```
+
+但是，需要排除登陆页面，覆盖类变量为空.
+
+```python
+class JwtLoginView(APIView):
+    
+    authentication_classes = []
+    
+    def post(self, request, *args, **kwargs):
+        user = request.data.get("username")
+        pwd = request.data.get('pwd')
+        
+        user_object = models.UserInfo.objects.filter(username=user, password=pwd).first()
+        if not user_object:
+            return Response({'code': 1000, 'error': '用户名或密码错误'})
+         payload = {
+            'user_id': user_object.pk,
+            'user_name': user
+        }
+        token = creat_token(payload)
+        return Response({'code': 1001, 'data': token})
+```
+
+### 10.4 应用
+
+```python
+pip install pyjwt
+pyjwt.encode		# 生成token
+pyjwt.decode		# 解密token
+```
+
+djangorestframework-jwt也是调用pyjwt实现。
