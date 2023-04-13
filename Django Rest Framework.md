@@ -330,6 +330,12 @@ Rest Framework提供了众多的通用视图基类与扩展类，以简化试图
 直接在定义类时，在最开始定义类变量传入查询的全表结果以及自定义的序列化器类。后面所有的方法，都可以调用genericapiview获取到（增删改查方法全部可以复用，不需要自己传参）。
 
 ```python
+class BookSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Book
+        fields = "__all__"
+        
+
 class BookView(GenericAPIView):
     
     queryset = Book.objects.all()
@@ -385,5 +391,100 @@ path("book/", views.BookView.as_view()),
 re_path("book/(?P<pk>\d+)/", views.BookDetailView.as_view()),
 ```
 
+### 5.2 Mixin混合类
 
+把增删改查查封装到了5个单独的类，需要用到哪个功能，就在自定义的类中多继承对应的类。
+
+```python
+from rest_framework.mixins import ListModelMixin, CreateModelMixin, UpdateModelMixin, RetrieveModelMixin, DestroyModelMixin
+
+class PublishSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Publish
+        fields = "__all__"
+        
+
+class PublishView(ListModelMixin, CreateModelMixin, GenericView):
+    queryset = Publish.objects.all()
+    serializer_class = PublishSerializers
+
+    def get(self, request):
+        return self.list(request)
+
+    def post(self, request):
+        return self.create(request)
+
+
+class PublishDetailView(RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, GenericDetailView):
+    queryset = Publish.objects.all()
+    serializer_class = PublishSerializers
+
+    def get(self, request, pk):
+        return self.retrieve(request, pk)
+
+    def put(self, request, pk):
+        return self.update(request, pk)
+
+    def delete(self, request, pk):
+        return self.destroy(request, pk)
+```
+
+在封装：rest_framework.generics中，完全封装好了上面的5种方法到两个类中：ListCreateAPIView, RetrieveUpdateDestroyAPIView。
+
+ListCreateAPIView包含了get和post方法，RetrieveUpdateDestroyAPIView包含了get， put，delete方法。
+
+只需要给自定义的类继承这两个类，就实现了5种接口。
+
+```python
+from rest_framework.generics import GenericAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
+
+class AuthorSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Author
+        fields = "__all__"
+        
+
+class AuthorView(ListCreateAPIView):
+    queryset = Author.objects.all()
+    serializer_class = AuthorSerializers
+
+
+class AuthorDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Author.objects.all()
+    serializer_class = AuthorSerializers
+```
+
+### 5.3 ViewSet类
+
+重新构建分发机制。ViewSetMixin类中，重新编写了as_view函数，使得自己编写的函数名可以关联到增删改查查5个方法。
+
+通过闭包，传入映射字典，封装了view函数，然后通过for循环，对每个键值对建立映射。
+
+```python
+# action = {"get": "get_all", "post": "add_obj"}
+for method, action in actions.items():
+    # 去self中找到自定义的get_all方法
+    handler = getattr(self, action)
+    # 把原来self中写的get方法，重新定向给找到的get_all方法
+    setattr(self, method, handler)
+```
+
+```python
+def view(request, *args, **kwargs):
+    # 哪个类调用了as_view，cls就是哪个类。url中，FactoryView调用了as_view，所以拿到了FactoryView类
+    self = cls(**initkwargs)
+    
+    # action = {"get": "get_all", "post": "add_obj"}
+    for method, action in actions.items():
+        # 去self中找到自定义的get_all方法
+        handler = getattr(self, action)
+        # 把原来self中写的get方法，重新定向给找到的get_all方法
+        setattr(self, method, handler)
+
+    self.request = request
+    self.args = args
+    self.kwargs = kwargs
+	# 分发对应的方法到新设置的get_all方法
+    return self.dispatch(request, *args, **kwargs)
+```
 
