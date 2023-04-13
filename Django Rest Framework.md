@@ -293,3 +293,97 @@ class StudentDetailView(APIView):
             return Response(serializers.errors)
 ```
 
+#### Model Serializer
+
+和ModelForm一样，使用class meta导入已经创建好的model，自动构建field，create和update。
+
+```python
+class StudentModelSerializer(serializers.ModelSerializer):
+    # 想更改class_null的field的名字，将其指向表中的class_null
+    class_num = serializers.CharField(source="class_null")
+    class Meta:
+        model = Student
+        # 排除掉class_null和主键，其余field自动生成
+        exclude = ["id", "class_null"]
+```
+
+## 5. 视图
+
+DRF提供的视图的主要作用：
+
+- 控制序列化器的执行（校验，保存，转换数据）
+- 控制数据库模型的操作
+
+Rest Framework提供了众多的通用视图基类与扩展类，以简化试图的编写
+
+### 5.1 GenericAPIView 通用视图类
+
+继承自APIView，主要增加了操作序列化器和数据库查询方法。作用是为下面的Mixin扩展类的执行提供方法支持。通常在使用时，可搭配一个或多个Mixin扩展类。
+
+提供的关于序列化器使用的属性与方法。
+
+- `get_serializer_class(self)`：获取序列化器的类
+- `get_serializer(self, *args, **kwargs)`：获取序列化类的实例对象
+- `get_queryset(self)`：获取查询集
+- `get_object(self)`：获取单一的资源对象
+
+直接在定义类时，在最开始定义类变量传入查询的全表结果以及自定义的序列化器类。后面所有的方法，都可以调用genericapiview获取到（增删改查方法全部可以复用，不需要自己传参）。
+
+```python
+class BookView(GenericAPIView):
+    
+    queryset = Book.objects.all()
+    serializer_class = BookSerializers
+
+    def get(self, request):
+        serializer = self.get_serializer(instance=self.get_queryset(), many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializers = self.get_serializer(data=request.data)
+        try:
+            serializers.is_valid(raise_exception=True)
+            # 插入记录
+            serializers.save()
+            return Response(serializers.data)
+
+        except Exception as e:
+            print(e)
+            return Response(serializers.errors)
+
+
+class BookDetailView(GenericAPIView):
+    
+    queryset = Book.objects.all()
+    serializer_class = BookSerializers
+    
+    def get(self, request, pk):
+        serializer = self.get_serializer(instance=self.get_object(), many=False)
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        self.get_object().delete()
+        return Response()
+
+    def put(self, request, pk):
+        serializers = self.get_serializer(instance=self.get_object(), data=request.data)
+        try:
+            serializers.is_valid(raise_exception=True)
+            # 更新记录
+            serializers.save()
+            return Response(serializers.data)
+
+        except Exception as e:
+            print(e)
+            return Response(serializers.errors)
+```
+
+在url中传入id时，需要绑定pk作为名称，使得genericapiview可以通过名字使用该变量。
+
+```python
+path("book/", views.BookView.as_view()),
+re_path("book/(?P<pk>\d+)/", views.BookDetailView.as_view()),
+```
+
+
+
