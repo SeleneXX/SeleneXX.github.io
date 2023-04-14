@@ -307,6 +307,25 @@ class StudentModelSerializer(serializers.ModelSerializer):
         exclude = ["id", "class_null"]
 ```
 
+#### Model Serialzer 自定义校验
+
+类似modelform的clean_xxx钩子方法。验证不通过需要抛出异常。
+
+```python
+class PublishModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Publish
+        fields = "__all__"
+        
+    # 和modelform一样，创建钩子方法
+    def validate_name(self, value):
+        if name.endswith("出版社"):
+            return value
+        else:
+            # 验证失败
+            raise serializers.ValidationError("出版社名称必须以出版社结尾")
+```
+
 ## 5. 视图
 
 DRF提供的视图的主要作用：
@@ -461,15 +480,6 @@ class AuthorDetailView(RetrieveUpdateDestroyAPIView):
 通过闭包，传入映射字典，封装了view函数，然后通过for循环，对每个键值对建立映射。
 
 ```python
-# action = {"get": "get_all", "post": "add_obj"}
-for method, action in actions.items():
-    # 去self中找到自定义的get_all方法
-    handler = getattr(self, action)
-    # 把原来self中写的get方法，重新定向给找到的get_all方法
-    setattr(self, method, handler)
-```
-
-```python
 def view(request, *args, **kwargs):
     # 哪个类调用了as_view，cls就是哪个类。url中，FactoryView调用了as_view，所以拿到了FactoryView类
     self = cls(**initkwargs)
@@ -486,5 +496,48 @@ def view(request, *args, **kwargs):
     self.kwargs = kwargs
 	# 分发对应的方法到新设置的get_all方法
     return self.dispatch(request, *args, **kwargs)
+```
+
+##### GenericViewSet
+
+在genericapiview的基础上，加上了Mixin重新分发的机制。直接继承所有的Mixin混合类，和genericviewset，并在路由中设置映射。
+
+```python
+class FactoryView(GenericViewSet, ListModelMixin, CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin):
+    queryset = Factory.objects.all()
+    serializer_class = FactorySerializers
+```
+
+```python
+path("factory/", views.FactoryView.as_view({"get": "list", "post": "create"})),
+re_path("factory/(?P<pk>\d+)/",
+        views.FactoryView.as_view({"get": "retrieve", "delete": "destroy", "put": "update"})),
+```
+
+##### ModelViewSet
+
+封装了上面5个类+genericviewset，直接继承这个即可。
+
+```python
+class FactoryView(ModelViewSet):
+    queryset = Factory.objects.all()
+    serializer_class = FactorySerializers
+```
+
+## 6. 路由
+
+可以使用drf封装好的工具，直接生成路由项，不需要手写。注意，需要使用viewset把所有功能封装到一个类内。
+
+```python
+from rest_framework import routers
+router = routers.DefaultRouter()
+# 自动生成两句路由命令
+router.register('factory', views.FactoryView, basename='factory')
+
+urlpatterns = [
+    "xxx"
+]
+
+urlpatterns += router.urls
 ```
 

@@ -1463,4 +1463,195 @@ await等待后面的对象得到结果后，再继续向下走。下一步依赖
 
 #### 8.3.4 Task对象
 
-在事件循环中，添加多个任务。并发调度协程/
+在事件循环中，添加多个任务。并发调度协程，通过`asyncio.create_task(协程对象)`创建Task对象。这样可以让协程加入事件循环中等待被调度执行。也可以用`loop.create_task()`或`ensure_future()`。
+
+```python
+async def func():
+    print(1)
+    # task1在此等待，切换task2
+    await asyncio.sleep(2)
+    print(2)
+    return "返回值"
+
+async def main():
+    print("main开始")
+    # 创建协程，将协程封装到一个task对象中并立即添加到事件循环的任务列表中，等待事件循环去执行。（默认是就绪态）
+    task1 = asyncio.create_task(func())
+    task2 = asyncio.create_task(func())
+    print("main结束")
+    
+    # main协程等待，会自动切换task1
+    # 此处的await是等待相应的协程全部执行完毕后获取结果
+    ret1 = await task1
+    ret2 = await task2
+    print(ret1, ret2)
+    
+asyncio.run(main())
+```
+
+运行结果：
+
+main开始，main结束，1（task1），1（task2），2（task1），2（task2），返回值，返回值
+
+```python
+async def func():
+    print(1)
+    await asyncio.sleep(2)
+    print(2)
+    return "返回值"
+
+async def main():
+    print("main开始")
+    # 创建协程列表
+    task_list = [
+        # 可以自定义名字
+        asyncio.create_task(func(), name='n1'),
+        asyncio.create_task(func(), name='n2')
+    ]
+    print("main结束")
+    # 等待列表内任务执行完，完成的任务对象存入done，当设置timeout时间时，如果有任务没有完成，则加入pending
+    done, pending = await asyncio.wait(task_list)
+    print(done)
+    
+asyncio.run(main())
+```
+
+done：
+
+```
+{
+	<Task finished name='n1' coro=<func() done, defined at <stdin>:1> result='返回值'>, 
+	<Task finished name='n2' coro=<func() done, defined at <stdin>:1> result='返回值'>
+}
+```
+
+注意，asyncio.wait等待任务对象时，一定要有事件循环，因为任务对象是需要立即传入到事件循环中的。
+
+```python
+async def func():
+    print(1)
+    await asyncio.sleep(2)
+    print(2)
+    return "返回值"
+
+task_list = [
+    asyncio.create_task(func(), name='n1'),
+    asyncio.create_task(func(), name='n2')
+]
+# 此时，还没有创建循环，就加入任务对象，所以报错
+done, pending = asyncio.run(asyncio.wait(task_list))
+```
+
+如果不使用任务对象，而直接用协程对象，则会自动创建loop并开始。
+
+```python
+async def func():
+    print(1)
+    await asyncio.sleep(2)
+    print(2)
+    return "返回值"
+
+task_list = [
+    func(),
+    func()
+]
+# 传入协程对象而不是task对象，run会自动创建时间循环然后加入任务。
+done, pending = asyncio.run(asyncio.wait(task_list))
+```
+
+#### 8.3.5 asyncio.Future对象
+
+task类继承了future。task对象内部await结果基于future对象。
+
+```python
+async def main():
+    # 获取当前事件循环
+    loop = asyncio.get_running_loop()
+    # 创建一个任务（future对象），这个任务什么都不干
+    fut = loop.creat_future()
+    # 等待任务最终结果（future对象），没有结果则会一直等待下去
+    await fut
+    
+asyncio.run(main())
+```
+
+```python
+async def set_after(fut):
+    # 执行2秒后，给fut赋值
+    await asyncio.sleep(2)
+    fut.set_result("666")
+
+async def main():
+    # 获取当前事件循环
+    loop = asyncio.get_running_loop()
+    # 创建一个任务（future对象），这个任务什么都不干
+    fut = loop.creat_future()
+    # 创建一个任务，绑定set_after函数
+    await loop.create_task(set_after(fut))
+    
+    # 等待任务最终结果（future对象），没有结果则会一直等待下去
+    await fut
+    
+asyncio.run(main())
+```
+
+task类会自动执行绑定的函数，然后给继承的future对象set_result。一般不手动用future。
+
+#### 8.3.6 concurrent.futures.Future对象
+
+使用线程池，进程池实现异步操作时用到的。
+
+```python
+import time
+from concurrent.futures import Future
+from concurrent.futures.thread import ThreadPoolExecutor
+from concurrent.futures.process import ProcessPoolExecutor
+
+def func(value):
+    time.sleep(1)
+    print(value)
+    
+# 创建线程池/进程池
+pool = ThreadPoolExecutor(max_workers=5)
+
+for i in range(10):
+    # 每次提交任务，都会返回一个future对象，没有执行的时候，future对象没有结果。执行完，发结果传给future对象。
+    fut = pool.submit(func, i)
+    print(fut)
+```
+
+可能会存在两种future交叉使用。例如：crm项目80%基于协程异步编程+MySQL，但是MySQL不支持异步，所以需要使用线程/进程做异步编程。
+
+```python
+import time
+import asyncio
+import concurrent.futures
+
+def func1():
+    # MySQL的耗时操作
+    time.sleep(2)
+    return "123"
+
+async def SQL():
+    loop = asyncio.get_running_loop()
+    # run_in_executor方法：
+    # 调用threadpoolexecutor创建线程池，把func1放submit进池子，并返回concurrent.future对象
+    # 调用asyncio.wrap_future将concurrent.future对象包装成asyncio.future对象，使其支持await操作
+    # 第一个参数None代表默认创建线程池。如果想用进程池，则先创建一个进程池，然后把进程池作为第一个参数传入。
+    fut = loop.run_in_executor(None, func1)
+    result = await fut
+    print("default thread pool", result)
+    
+    
+async def main():
+    task_list = [
+        asyncio.create_task(SQL(), name='n1'),
+        asyncio.create_task(SQL(), name='n2'),
+        asyncio.create_task(SQL(), name='n3')
+	]
+    done, pending = await asyncio.wait(task_list)
+    return done
+
+asyncio.run(main())
+```
+
