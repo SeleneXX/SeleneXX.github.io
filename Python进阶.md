@@ -20,7 +20,32 @@ Python基于C语言实现。基于C语言的结构体来维护对应的对象。
   - PyVarObject继承自PyObject，除了PyObject中的三个元素，还包含：
     - 内部元素的个数
 
-#### 在python中的float对象：
+#### python中的float对象：
+
+整数部分使用短除法2进制表示，小数部分用短乘法（每次乘2，于1对比，大于1则减1，取每次相乘的整数部分。
+
+39.29
+
+```
+39 = 0b100111
+0.29 * 2 = 0.58		       			0
+0.58 * 2 = 1.16 - 1 = 0.16		1
+0.16 * 2 = 0.32								0
+0.32 * 2 = 0.64								0
+0.64 * 2 = 1.28 - 1 = 0.28		1
+......
+39.29 = 0b100111.01001....
+用科学记数法表示为：
+0b1.00111 01001 * 2^5
+```
+
+| 1位                          | 8位                                                          | 23位                                                         |
+| ---------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| Sign，表示浮点数正负。0正1负 | 科学记数法中指数的值。表示范围为-126～127共计256位。对于所有存入的指数都需要加上127，0-126表示负数，127～256表示正数 | 用23位存科学记数法小数点后面的所有数，因为小数点前面永远是1。 |
+
+所以，当小数部分有无穷位时，只能保存23位，会导致结果不精确。
+
+想要完全精确保存小数，需要使用decimal。
 
 ```python
 v = 0.3
@@ -123,13 +148,13 @@ name_list.append("123")
 
 - 首先，引用计数器-1。
 
-  - 如果此时引用计数器还>0，则代表还有其他变量使用此列表，不进行任何操作
+    - 如果此时引用计数器还>0，则代表还有其他变量使用此列表，不进行任何操作
 
-  - 否则，表示此列表已经没有任何引用，进行清空：
-    - 如果列表中有元素，把每个元素的引用计数器-1
-    - 再将自己的ob_tiem = NULL, ob_size = 0, ob_allocated = 0
-    - 将列表从管理内存的双向环状列表删除。
-    - 将分配的地址存入垃圾缓存free_list，默认列表的free_list容量为80。超过80则直接销毁该对象。
+    - 否则，表示此列表已经没有任何引用，进行清空：
+        - 如果列表中有元素，把每个元素的引用计数器-1
+        - 再将自己的ob_tiem = NULL, ob_size = 0, ob_allocated = 0
+        - 将列表从管理内存的双向环状列表删除。
+        - 将分配的地址存入垃圾缓存free_list，默认列表的free_list容量为80。超过80则直接销毁该对象。
 
 ## 2. 垃圾回收机制
 
@@ -160,8 +185,8 @@ Python中所有元素都是一个class。
 
 ```python
 def func():
-  """ 函数1的注释 """
-  return 123
+    """ 函数1的注释 """
+    return 123
 
 print(func.__name__)			# 获取函数名称
 print(func.__doc__)				# 获取函数中三引号注释
@@ -175,20 +200,20 @@ print(func.__doc__)				# 获取函数中三引号注释
 
 ```python
 def outer(origin):
-  # 接收原函数
-  def inner(*args, **kwargs):
-    # 接收原函数传入的参数
-    # 需要添加的功能
-    res = origin(*args, **kwargs)		# 传入原函数的参数并执行
-    # 需要添加的功能
-    return res											# 返回原函数的返回值
-  # 返回一个新的函数
-  return inner
+    # 接收原函数
+    def inner(*args, **kwargs):
+        # 接收原函数传入的参数
+        # 需要添加的功能
+        res = origin(*args, **kwargs)		# 传入原函数的参数并执行
+        # 需要添加的功能
+        return res											# 返回原函数的返回值
+    # 返回一个新的函数
+    return inner
 
 @outer		# 等价于 func = outer(func)
 def func(a1, a2, a3):
-  value = [a1, a2, a3]
-  return value
+    value = [a1, a2, a3]
+    return value
 
 func()
 ```
@@ -199,18 +224,18 @@ func()
 import functools
 
 def outer(origin):
-  @functools.wraps(func)			# 将原函数类内的各个元素包装给装饰器：inner.__name__ = func.__name__
-  def inner(*args, **kwargs):
-    print("before")
-    res = origin(*args, **kwargs)		
-    print("after")
-    return res										
-  return inner
+    @functools.wraps(func)			# 将原函数类内的各个元素包装给装饰器：inner.__name__ = func.__name__
+    def inner(*args, **kwargs):
+        print("before")
+        res = origin(*args, **kwargs)		
+        print("after")
+        return res										
+    return inner
 
 @outer		
 def func(a1, a2, a3):
-  value = [a1, a2, a3]
-  return value
+    value = [a1, a2, a3]
+    return value
 
 func()
 ```
@@ -441,17 +466,17 @@ func()
 
 ```python
 class IT(objects):
-  def __init__(self):
-    self.counter = 0
-    
-  def __iter__(self):
-    return self
-  
-  def __next__(self):
-    self.counter += 1
-    if self.counter == 3:
-      raise StopIteration()
-    return self.counter
+    def __init__(self):
+      	self.counter = 0
+
+    def __iter__(self):
+      	return self
+
+    def __next__(self):
+        self.counter += 1
+        if self.counter == 3:
+          	raise StopIteration()
+        return self.counter
 ```
 
 迭代时，有两种方法：
@@ -464,7 +489,7 @@ class IT(objects):
 ```python
 obj2 = IT()
 for item in obj2:				# 首先或执行迭代器对象__iter__方法并获取返回值，反复执行next(对象)直到终止
-  print(item)
+  	print(item)
 ```
 
 ### 生成器定义：
@@ -474,21 +499,21 @@ for item in obj2:				# 首先或执行迭代器对象__iter__方法并获取返�
 ```python
 # 创建生成器函数
 def func():
-  yield 1
-  yield 2
+    yield 1
+    yield 2
   
 obj = func()
 for item in obj:
-  print(item)
+ 	 print(item)
 ```
 
 yield出现在函数内部时，函数自动转化为生成器对象。yield类似return。它的作用是，当函数执行到yield，会抛出当前的值，然后停在yield这一行。执行next方法后，接着上次停止的地方，继续执行。
 
 ```python
 def foo():
-  while True:
-    res = yield 4
-    print("res:", res)
+    while True:
+        res = yield 4
+        print("res:", res)
     
 obj1 = foo()
 print(next(obj1))						# 停在yield这一行，返回4
@@ -503,12 +528,12 @@ print(obj1.send(7))					# send方法传入一个数据代替刚刚停在的yield
 ```python
 class Foo(object):
   
-  def __iter__(self):
-    return iteratorObject
-  
+    def __iter__(self):
+        return iteratorObject
+
 obj = Foo()
 for item in obj:			# 内部执行该对象的__iter__，获取到的返回值是一个迭代器对象，不断执行该迭代器对象的next方法
-  print(item)
+  	print(item)
 ```
 
 ### Python3中的range函数
@@ -520,15 +545,15 @@ for item in obj:			# 内部执行该对象的__iter__，获取到的返回值是
 ```python
 class Xrange(object):
   
-  def __init__(self, max_num):
-    self.max_num = max_num
-   
- 	def __iter__(self):
-    counter = 0
-    while counter < self.max_num:
-      yield counter
-			counter += 1
-      
+    def __init__(self, max_num):
+     	 self.max_num = max_num
+
+    def __iter__(self):
+        counter = 0
+        while counter < self.max_num:
+            yield counter
+            counter += 1
+
       
 obj = Xrange(100)
 for item in obj:
@@ -567,17 +592,17 @@ import time
 url_list = [xxx, xxx, xxx]			# 下载资源的url列表
 
 def task(filename, url):
-  res = request.get(video_url)
-  with open(filename, mode="wb") as f:
-    f.write(res.content)
-  print(time.time())
+    res = request.get(video_url)
+    with open(filename, mode="wb") as f:
+      	f.write(res.content)
+    print(time.time())
   
 print(time.time())
 for name url in url_list:
-  # 创建线程，使用的函数为target，传入函数的参数单独写出来为args
-  t = threading.Thread(target=task, args=(name, url))
-  # 线程开始工作
-  t.start()
+  	# 创建线程，使用的函数为target，传入函数的参数单独写出来为args
+  	t = threading.Thread(target=task, args=(name, url))
+ 		# 线程开始工作
+  	t.start()
 ```
 
 ### 多进程：
@@ -592,19 +617,19 @@ import time
 url_list = [xxx, xxx, xxx]			# 下载资源的url列表
 
 def task(filename, url):
-  res = request.get(video_url)
-  with open(filename, mode="wb") as f:
-    f.write(res.content)
-  print(time.time())
+    res = request.get(video_url)
+    with open(filename, mode="wb") as f:
+      	f.write(res.content)
+    print(time.time())
   
   
 if __name__ == "__main__":
-print(time.time())
-  for name url in url_list:
-    # 创建进程，使用的函数为target，传入函数的参数单独写出来为args
-    t = multiprocessing.Process(target=task, args=(name, url))
-    # 进程开始工作
-    t.start()
+    print(time.time())
+    for name url in url_list:
+        # 创建进程，使用的函数为target，传入函数的参数单独写出来为args
+        t = multiprocessing.Process(target=task, args=(name, url))
+        # 进程开始工作
+        t.start()
 ```
 
 多进程理论上开销更大
@@ -615,6 +640,13 @@ print(time.time())
 
 - 计算密集型：每个操作都需要用CPU，所以多线程会被GIL锁住，只能用多进程
 - IO密集型：等待IO的时间，不需要利用CPU，可以利用多线程
+
+可以防止在没有GIL锁的情况下，有可能多线程在执行一个代码的同时，垃圾回收机制对所执行代码的变量直接进行回收，其他的线程再使用该变量时会导致运行错误：
+
+- 假设有2个python线程同时引用一个数据（a=100，引用计数为1），2个线程都会去操作该数据。
+- 由于多线程对同一个资源的竞争，实际上引用计数为3。但是由于没有GIL锁，导致引用计数只增加1（引用计数为2）。
+- 这造成的后果是，当第1个线程结束时，会把引用计数减少为1；当第2个线程结束时，会把引用计数减少为0。
+- 当下一个线程再次视图访问这个数据时，就无法找到有效的内存了。
 
 ### 多线程开发：
 
@@ -1141,5 +1173,294 @@ for i in range(10):
     future = pool.submit(task, lock_object)
 ```
 
-## 8. 元类
+## 8. 协程和异步
 
+### 8.1 协程
+
+不是计算机提供的，计算机只提供进程和线程。而是程序员人为创造的，是一种用户态上下文切换的技术。
+
+```python
+def func1():
+    print(1)
+    time.sleep(2)
+    print(2)
+  
+def func2():
+    print(3)
+    time.sleep(2)
+    print(4)
+  
+func1()
+func2()
+```
+
+实现携程的方法：
+
+- greenlet，早期模块
+- yield关键字
+- Python3.4引入的asyncio装饰器
+- **async，await关键字（python3.5）**
+
+#### 8.1.1 通过greenlet实现协程
+
+```shell
+pip3 install greenlet
+```
+
+```python
+from greenlet import greenlet
+
+def func1():
+    print(1)										# 第2步：输出 1
+    gr2.switch()								# 第3步：切换到fun2函数
+    print(2)										#	第6步：输出 2
+    gr2.switch()								# 第7步：切换到func2函数，从上一次执行到的位置继续向后执行
+  
+def func2():
+    print(3)										# 第4步：输出 3
+    gr1.switch()								# 第5步：切换到func1函数，从上一次执行到的位置继续向后执行
+    print(4)										# 第8步：输出 4
+
+gr1 = greenlet(func1)
+gr2 = greenlet(func2)
+
+gr1.switch()										# 第1步：执行func1函数
+```
+
+#### 8.1.2 通过yield关键字（生成器）
+
+```python
+def func1():
+    yield 1										# 第2步：打印1
+    yield from func2()				# 第3步：跳到func2
+    yield 2										# 第6步：func2执行完，跳转回func1，打印2
+  
+def func2():
+    yield 3										# 第4步：打印3
+    yield 4										# 第5步：打印4
+  
+f1 = func1()									# 第1步：调用生成器函数，得到生成器对象f1
+for item in f1:
+ 	 print(item)
+```
+
+#### 8.1.3 asyncio
+
+```python
+import asyncio
+
+@asyncio.coroutine
+def func1():
+    print(1)
+    # 模拟网络IO请求
+    yield from asyncio.sleep(2)		# 遇到IO耗时任务，自动化切换到tasks中的其他任务
+    print(2)
+
+@asyncio.coroutine
+def func2():
+    print(3)
+    # 模拟网络IO请求
+    yield from asyncio.sleep(2)		# 遇到IO耗时任务，自动化切换到tasks中的其他任务
+    print(4)
+  
+tasks = [
+  asyncio.ensure_future(func1()),
+  asyncio.ensure_future(func2())
+]
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(asyncio.wait(tasks))
+```
+
+遇到io阻塞，自动切换其他空闲任务。
+
+#### 8.1.4 async&await 关键字
+
+和上一个一样，只是不用写装饰器了。改为async和await。
+
+```python
+import asyncio
+
+async def func1():
+    print(1)
+    # 模拟网络IO请求
+    await asyncio.sleep(2)		# 遇到IO耗时任务，自动化切换到tasks中的其他任务
+    print(2)
+
+async def func2():
+    print(3)
+    # 模拟网络IO请求
+    await asyncio.sleep(2)		# 遇到IO耗时任务，自动化切换到tasks中的其他任务
+    print(4)
+  
+tasks = [
+  asyncio.ensure_future(func1()),
+  asyncio.ensure_future(func2())
+]
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(asyncio.wait(tasks))
+```
+
+#### 8.1.5 协程的意义
+
+在一个线程中，如果遇到IO等待时间，线程会利用空闲的时间，去完成其他的任务。
+
+多线程vs协程：
+
+- 在有GIL锁的条件下，多线程在io密集型任务中，也可以提高效率，但是由于多线程需要考虑线程安全，对部分操作，需要加锁；线程切换也需要消耗资源。
+- 协程实际上只有一个线程，不需要加锁；也不需要线程切换。
+
+协程案例，下载图片（异步方式）：
+
+```shell
+pip install aiohttp
+```
+
+```python
+"""
+非协程使用request模块下载图片，协程中需要使用aiohttp
+"""
+import aiohttp
+import asyncio
+
+async def fetch(session, url):
+    print("发送请求:", url)
+    async with session.get(url, verify_ssl=False) as response:
+        content = await response.content.read()
+        file_name = url.rsplit("-")[-1]
+        with open(file_name, mode="wb") as file_object:
+          	file_object.write(content)
+      
+async def main():
+    async with aiohttp.ClientSession() as session:
+        url_list = [
+          'xxxxxx'
+        ]
+        tasks = [asyncio.create_task(fetch(session, url)) for url in url_list]
+        await asyncio.wait(tasks)
+    
+if __name__ = "__main__":
+  	asyncio.run(main())
+```
+
+同步方式：使用循环依次下载。
+
+### 8.2 异步执行
+
+#### 8.2.1 事件循环
+
+```
+任务列表 = [任务1，任务2，任务3，...]
+
+while True:
+  	可执行的任务列表，已完成的任务列表 = 去任务列表中检查所有的任务，将‘可执行’和‘已完成’的任务返回
+  	
+  	for 就绪任务 in 可执行的任务列表：
+    	执行已经就绪的任务
+    	
+    for 已完成的任务 in 已完成的任务列表：
+    	在任务列表中移除 已完成的任务
+    
+    如果 任务列表 中的任务都已完成，终止循环
+```
+
+```python
+import asyncio
+
+# 生成或获取一个事件循环
+loop = asyncio.get_event_loop()
+# 把任务放到 任务列表
+loop.run_until_complete(任务)
+```
+
+#### 8.2.2 快速上手
+
+协程函数：定义函数时，`async def 函数名`。
+
+协程对象：执行协程函数() 得到的协程对象。
+
+```python
+# 协程函数
+async def func():
+    pass
+
+# 协程对象
+result = func()
+```
+
+执行协程函数创建协程对象时，函数内部代码不会执行。
+
+如果想要执行协程函数内部代码，必须要将协程对象交给事件循环来处理。
+
+```python
+async def func():
+    print(1)
+
+result = func()
+
+# loop = asyncio.get_event_loop()
+# loop.run_until_complete(result)
+# python3.7后可以这么写
+asyncio.run(result)
+```
+
+#### 8.3.3 await
+
+await后面跟可等待的对象（例如IO等待）。
+
+可等待对象：
+
+- 协程对象
+- future对象
+- task对象
+
+```python
+async def func():
+    print(1)
+    # 模拟IO，等待的过程中，去执行其他任务
+    response = await asyncio.sleep(2)
+    print(2, response)
+    
+asyncio.run(func())
+```
+
+```python
+async def others():
+    print("start")
+    await asyncio.sleep(2)
+    print("end")
+    return "返回值"
+
+async def func():
+    print("执行协程函数内部代码")
+    # 遇到IO操作挂起当前协程（任务），等IO操作完成之后再继续往下执行。当协程挂起时，事件循环可以去执行其他协程（任务）
+    response = await others()		# await+协程对象，
+    print("IO请求结束，结果为：", response)
+    
+asyncio.run(func())
+```
+
+```python
+async def others():
+    print("start")
+    await asyncio.sleep(2)
+    print("end")
+    return "返回值"
+
+async def func():
+    print("执行协程函数内部代码")
+    # 遇到IO操作挂起当前协程（任务），等IO操作完成之后再继续往下执行。当协程挂起时，事件循环可以去执行其他协程（任务）
+    response1 = await others()		# await+协程对象，
+    print("IO请求结束，结果为：", response1)
+    response2 = await others()		# await+协程对象，
+    print("IO请求结束，结果为：", response2)
+    
+asyncio.run(func())
+```
+
+await等待后面的对象得到结果后，再继续向下走。下一步依赖上一步的结果时，用await。
+
+#### 8.3.4 Task对象
+
+在事件循环中，添加多个任务。并发调度协程/
