@@ -1405,7 +1405,7 @@ result = func()
 asyncio.run(result)
 ```
 
-#### 8.3.3 await
+#### 8.2.3 await
 
 await后面跟可等待的对象（例如IO等待）。
 
@@ -1461,7 +1461,7 @@ asyncio.run(func())
 
 await等待后面的对象得到结果后，再继续向下走。下一步依赖上一步的结果时，用await。
 
-#### 8.3.4 Task对象
+#### 8.2.4 Task对象
 
 在事件循环中，添加多个任务。并发调度协程，通过`asyncio.create_task(协程对象)`创建Task对象。这样可以让协程加入事件循环中等待被调度执行。也可以用`loop.create_task()`或`ensure_future()`。
 
@@ -1559,7 +1559,7 @@ task_list = [
 done, pending = asyncio.run(asyncio.wait(task_list))
 ```
 
-#### 8.3.5 asyncio.Future对象
+#### 8.2.5 asyncio.Future对象
 
 task类继承了future。task对象内部await结果基于future对象。
 
@@ -1597,7 +1597,7 @@ asyncio.run(main())
 
 task类会自动执行绑定的函数，然后给继承的future对象set_result。一般不手动用future。
 
-#### 8.3.6 concurrent.futures.Future对象
+#### 8.2.6 concurrent.futures.Future对象
 
 使用线程池，进程池实现异步操作时用到的。
 
@@ -1653,5 +1653,335 @@ async def main():
     return done
 
 asyncio.run(main())
+```
+
+案例：
+
+```python
+import asyncio
+import request
+
+async def download_image(url):
+    print("开始下载：", url)
+    loop = asyncio.get_running_loop()
+    future = loop.run_in_executor(None, request.get, url)
+    
+    response = await future
+    print("下载完成")
+    
+    fine_name = url.rsplit('-')[-1]
+    with open(file_name, mode="wb") as file_object:
+        file_object.write(response.content)
+        
+if __name__="__main__":
+    url_list = [
+        "xxx"
+    ]
+    tasks = [download_image(url) for url in url_list]
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(asyncio.wait(tasks))
+```
+
+#### 8.2.7 异步迭代器
+
+异步迭代器用循环调用时，必须在异步函数内。
+
+```python
+import asyncio
+
+class Reader(object):
+    """ 自定义异步迭代器（同时也是异步可迭代对象） """
+    
+    def __init__(self):
+        self.count = 0
+        
+    async def readline(self):
+        self.count += 1
+        if self.count == 100:
+            return None
+       	return self.count
+    
+    def __aiter__(self):
+        return self
+    
+    async def __anext__(self):
+        val = await self.readline()
+        if val == None:
+            raise StopAsyncIteration
+        return val
+
+async def func():
+    obj = Reader()
+    async for item in obj:
+        print(item)
+        
+asyncio.run(func())
+```
+
+#### 8.2.8 异步上下文管理器
+
+上下文管理：with xxx as xx。
+
+开始运行时调用`__enter__`方法，运行结束后调用`exit`方法。
+
+异步上下文管理在上下文管理的基础上加上async。这种上下文管理只能在协程函数中调用。
+
+```python
+import asyncio
+
+class AsyncContextManager:
+    def __init__(self, conn):
+        self.conn = conn
+        
+    async def do_something(self):
+        # 异步操作数据库
+        return 123
+    
+    async def __aenter__(self):
+        # 异步连接数据库
+        self.conn = await asyncio.sleep(1)
+        return self
+    
+    async def __aexit__(self, exc_type,, exc, tb):
+        # 异步关闭数据库连接
+        await asyncio.sleep(1)
+        
+async def func():
+    async with AsyncContextManager() as obj
+    	result = await obj.do_something
+    	print(result)
+        
+asyncio.run(func())
+```
+
+### 8.3 uvloop
+
+asyncio的事件循环的替代方案。uvloop事件循环的效率大于默认asyncio的事件循环。性能比肩go。
+
+```shell
+pip intall uvloop
+```
+
+```python
+import asyncio
+import uvloop
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
+# 编写asyncio代码，与传统asyncio一致
+# 内部的事件循环为uvloop
+asyncio.run(...)
+```
+
+asgi是支持异步服务的网关接口。uvicorn是一个asgi，非常快，FastAPI和Django3使用了这个asgi。内部默认使用uvloop。
+
+### 8.4 实战案例
+
+#### 8.4.1 异步redis
+
+通过python代码操作redis时，链接/操作/断开都是网络IO。通过async，可以提高并发。
+
+```shell
+pip install aioredis
+```
+
+```python
+import asyncio
+import aioredis
+
+async def execute(address, password):
+    print("开始执行", address)
+    # 网络IO操作：创建redis
+    redis = await aioredis.create_redis(address, password=password)
+    # 网络IO操作：在redis中设置哈希值car，内部设置3个键值对，即：
+    # redis = {car: {key1: 1, key2: 2, key3: 3}}
+    await redis.hmset_dict("car", key1=1, key2=2, key3=3)
+    # 网络IO操作：去redis中获取值
+    result = await redis.hgetall("car", encoding="utf-8")
+    print(result)
+    redis.close()
+    # 网络IO操作：关闭redis连接
+    await redis.wait_closed()
+    print("结束", address)
+  
+# 同时对两个redis服务器进行操作，在IO等待的时候切换另一个任务工作
+task_list = [
+    execute("redis://47.93.4.198:6379", "root!2345"),
+    execute("redis://17.13.41.92:6379", "root!2345")
+]
+asyncio.run(asyncio.wait(task_list))
+```
+
+#### 8.4.2 异步MySQL
+
+```shell
+pip3 install aiomysql
+```
+
+```python
+async def execute():
+    # 网络IO操作：连接MySQL
+    conn = await aiomysql.connect(host="127.0.0.1", port=3306, user="root", password="123", db="mysql",)
+    # 网络IO操作：创建CURSOR
+    cur = await conn.cursor()
+    # 网络IO操作：执行SQL
+    await cur.execute("SELECT Host, User From user")
+    # 网络IO操作：获取SQL结果
+    result = await cur.fetchall()
+    print(result)
+    # 网络IO操作：关闭连接
+    await cur.close()
+    conn.close()
+    
+asyncio.run(execute())
+```
+
+#### 8.4.3 FastAPI框架
+
+```shell
+pip install fastapi
+# 内部基于uvicorn这个asgi
+pip install uvicorn
+```
+
+每个red请求自己阻塞自己，但是fastapi会将不同用户的red请求组织成task。
+
+```python
+import asyncio
+
+import uvicorn
+import aioredis
+from aioredis import Redis
+from fastapi import FastAPI
+
+app = FastAPI()
+# 创建一个redis连接池
+REDIS_POOL = aioredis.ConnectionsPool("redis://47.193.14.198:6379", password="root123", minisize=1, maxsize=10)
+
+@app.get("/")
+def index():
+    """ 普通操作接口 """
+    return {"message": "Hello World"}
+
+@app.get("/red")
+async def red():
+    """ 异步操作接口 """
+    print("请求来了")
+    await asyncio.sleep(3)
+    # 连接池获取一个连接
+    conn = await REDIS_POOL.acquire()
+    redis = Redis(conn)
+    # 设置值
+    await redis.hmset_dict("car", key1=1, key2=2,key3=3)
+    # 读取值
+    result = await redis.hgetall("car", encoding="utf-8")
+    print(result)
+    # 连接归还连接池
+    REDIS_POOL.release(conn)
+    return result
+
+
+if __name__ = "__main__":
+    uvicorn.run("luffy:app", host="127.0.0.1", port=5000, log_level="info")
+```
+
+## 9. 非阻塞&IO复用
+
+### TCP协议
+
+服务端
+
+```python
+import socket
+# 创建socket对象
+tel = socket.socket(socket.AF_INET, socket.SOCK_STREAM)		# AF_INET代表ipv4，SOCK_STREAM代表TCP，如果是DGRAM代表UDP
+# 绑定ip和端口
+tel.bin(("127.0.0.1", 66000))			# 端口号1024-65535中没被占用的任意端口
+# 设置监听
+tel.listen(5)
+# 等待客户端连接
+conn, ip_port = tel.accept()			# 有两个返回值，第一个是客户端对象，第二个是网络地址和端口号
+while True:
+    # TCP不允许客户端先关机，如果发现客户端关机，则会报错。
+    try:
+        data = conn.recv(1024)
+        print(data.decode())
+        # 检测是否有消息接收
+        if not data:
+            break
+        conn.send(data)
+    except ConnectionResetError:
+        break
+# 关闭连接
+conn.close()
+tel.close()
+```
+
+客户端
+
+```python
+import socket
+# 创建socket对象
+phone = socket.socket(socket.AF_INET, socket.SOCK_STREAM)	
+# 连接服务端的IP和端口号
+phone.connect(("127.0.0.1", 10086))
+while True:
+    msg = input(">>(q退出):").strip()
+    # tcp协议不允许为空
+    if not msg:
+        continue
+    if msg == "q":
+        break
+    phone.send(msg.encode())
+    data = phone.recv(1024)
+    print(data.decode())
+    
+phone.close()
+```
+
+### 阻塞
+
+服务端在accept等待客户端连接时会阻塞。在等待接收消息recv时也会阻塞。
+
+### 非阻塞：
+
+socket对象.setblocking(False)
+
+服务端非阻塞
+
+```python
+import socket
+# 创建socket对象
+tel = socket.socket(socket.AF_INET, socket.SOCK_STREAM)		# AF_INET代表ipv4，SOCK_STREAM代表TCP，如果是DGRAM代表UDP
+# 绑定ip和端口
+tel.bin(("127.0.0.1", 66000))			# 端口号1024-65535中没被占用的任意端口
+# 设置监听
+tel.listen(5)
+# 设置为非阻塞状态
+tel.setblocking(False)
+# 保存客户端连接的socket对象
+r_list= []
+# 捕获阻塞异常
+try:
+    # 等待客户端连接
+    conn, ip_port = tel.accept()			# 有两个返回值，第一个是客户端对象，第二个是网络地址和端口号
+	r_list.append(conn)
+except BlockingIOError:
+    # 发生阻塞，从列表中获取已经保存的客户端连接，进行消息接收
+    
+
+while True:
+    # TCP不允许客户端先关机，如果发现客户端关机，则会报错。
+    try:
+        data = conn.recv(1024)
+        print(data.decode())
+        # 检测是否有消息接收
+        if not data:
+            break
+        conn.send(data)
+    except ConnectionResetError:
+        break
+# 关闭连接
+conn.close()
+tel.close()
 ```
 
