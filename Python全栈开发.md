@@ -4268,10 +4268,10 @@ quit
   ````
 
   ````mysql
-  create table tb1(
+  create table admin(
       id int not null auto_increment primary key, 		-- 设置为主键，不允许为空，不允许重复，内部维护id自增
-      name varchar(16), 
-      age int
+      username varchar(64), 
+      password varchar(64),
   ) default charset=utf8;
   ````
 
