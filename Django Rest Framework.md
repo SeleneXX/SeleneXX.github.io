@@ -423,7 +423,7 @@ class PublishSerializers(serializers.ModelSerializer):
         fields = "__all__"
         
 
-class PublishView(ListModelMixin, CreateModelMixin, GenericView):
+class PublishView(ListModelMixin, CreateModelMixin, GenericAPIView):
     queryset = Publish.objects.all()
     serializer_class = PublishSerializers
 

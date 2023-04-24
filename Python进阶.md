@@ -646,7 +646,7 @@ if __name__ == "__main__":
 - 假设有2个python线程同时引用一个数据（a=100，引用计数为1），2个线程都会去操作该数据。
 - 由于多线程对同一个资源的竞争，实际上引用计数为3。但是由于没有GIL锁，导致引用计数只增加1（引用计数为2）。
 - 这造成的后果是，当第1个线程结束时，会把引用计数减少为1；当第2个线程结束时，会把引用计数减少为0。
-- 当下一个线程再次视图访问这个数据时，就无法找到有效的内存了。
+- 当下一个线程再次试图访问这个数据时，就无法找到有效的内存了。
 
 ### 多线程开发：
 
@@ -809,7 +809,7 @@ for _ in range(1000):
 pool.shutdown(True)			# 主线程等待所有线程池中所有任务执行完再向下运行
 
 for fu in future_list:
-    print(fu.rresult())
+    print(fu.result())
 ```
 
 案例：
@@ -1035,28 +1035,30 @@ python创建进程的三大模式：
 
 Python有4种方法：
 
-- value和array，由c编写（很少用）
+- 共享内存：
 
-- 利用`Manager()`，创建server进程来管理所有对象，可以被子进程访问
+  - value和array，由c编写（很少用）
 
-  ```python
-  from multiprocessing import Process, Manager
-  
-  def f(d, 1):
-      d[1] = "1"
-      d['2'] = 2
-      d[0.25] = None
-      l.append(666)
-  
-  if __name__ = "__main__":
-      with Manager() as manager:
-          d = manager.dict()
-          l = manager.list()
-          p = Process(target=f, args=(d, l, ))
-          p.start()
-  ```
+  - 利用`Manager()`，创建server进程来管理所有对象，可以被子进程访问
 
-- 队列`multiprocessing.Queue()`，先进先出
+    ```python
+    from multiprocessing import Process, Manager
+    
+    def f(d, 1):
+        d[1] = "1"
+        d['2'] = 2
+        d[0.25] = None
+        l.append(666)
+    
+    if __name__ = "__main__":
+        with Manager() as manager:
+            d = manager.dict()
+            l = manager.list()
+            p = Process(target=f, args=(d, l, ))
+            p.start()
+    ```
+
+- 队列：`multiprocessing.Queue()`，先进先出
 
   ```python
   def task(q):
@@ -1074,7 +1076,7 @@ Python有4种方法：
       print(queue.get())
   ```
 
-- 管道`multiprocessing.Pipe()`，两个单向队列。类似websocket。
+- 管道：`multiprocessing.Pipe()`，两个单向队列。类似websocket。
 
   ```python
   def task(conn):
@@ -1091,6 +1093,34 @@ Python有4种方法：
       info = parent_conn.recv()		# 阻塞，等待数据
       print(info)
       parent_conn.send(666)
+  ```
+
+- 信号量：信号量是一个内部数据，用于标明当前的共享资源可以有多少并发读取。
+
+  ```python
+  from multiprocessing import Process, Semaphore
+  from time import sleep
+  import os
+  
+  # 创建信号量
+  sem = Semaphore(3)
+  
+  def handle(sem):
+      sem.acquire()		# 信号量-1
+      print("执行任务1")
+      sleep(2)
+      print("执行任务2")
+      sem.release()		# 信号量+1
+      
+  if __name__ = "__main__":
+      jobs = []
+      for i in range(10):
+          p = Process(target=handle, args=(sem,))
+          jobs.append(p)
+          p.start()
+          
+      for i in jobs:
+          i.join()
   ```
 
 ### 进程锁：
@@ -1212,13 +1242,13 @@ from greenlet import greenlet
 
 def func1():
     print(1)										# 第2步：输出 1
-    gr2.switch()								# 第3步：切换到fun2函数
-    print(2)										#	第6步：输出 2
-    gr2.switch()								# 第7步：切换到func2函数，从上一次执行到的位置继续向后执行
+    gr2.switch()									# 第3步：切换到fun2函数
+    print(2)										# 第6步：输出 2
+    gr2.switch()									# 第7步：切换到func2函数，从上一次执行到的位置继续向后执行
   
 def func2():
     print(3)										# 第4步：输出 3
-    gr1.switch()								# 第5步：切换到func1函数，从上一次执行到的位置继续向后执行
+    gr1.switch()									# 第5步：切换到func1函数，从上一次执行到的位置继续向后执行
     print(4)										# 第8步：输出 4
 
 gr1 = greenlet(func1)
@@ -1232,7 +1262,7 @@ gr1.switch()										# 第1步：执行func1函数
 ```python
 def func1():
     yield 1										# 第2步：打印1
-    yield from func2()				# 第3步：跳到func2
+    yield from func2()							# 第3步：跳到func2
     yield 2										# 第6步：func2执行完，跳转回func1，打印2
   
 def func2():
