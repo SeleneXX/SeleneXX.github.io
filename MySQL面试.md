@@ -16,7 +16,7 @@
 
 ## 2. MySQL中的B+树
 
-- MySQL中的B+树并不是传统定义的B+树，而是由B树改进，没有冗余的叶节点，并且相邻叶子节点之间通过双向指针相连。
+- MySQL中的B+树并不是传统定义的B+树，而是由B树改进，没有 并且相邻叶子节点之间通过双向指针相连。
 
   ![image-20230330151315708](C:\Users\Selene\AppData\Roaming\Typora\typora-user-images\image-20230330151315708.png)
 
