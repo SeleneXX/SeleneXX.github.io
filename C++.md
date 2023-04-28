@@ -151,3 +151,145 @@ int main(){
 
 通过在基类定义虚函数，可以在类中添加一个4字节区域存储虚函数表。所有子类继承父类的同时，继承该组函数表。如果重写某个虚函数，则会在虚函数表中重写地址。这样就可以通过基类指针，调用子类中重写的虚函数。
 
+### 构造函数
+
+与python中的类的init类似。可以在类外定义
+
+```c++
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+class student{
+private:
+	int no;
+    string name;
+    float score[3];
+public:
+    student(); // 与类同名的构造函数
+    // 可以重载构造函数
+    void display(){
+        cout << 1 << endl
+    }
+}
+
+// 在类外定义构造函数，需要通过双冒号声明该函数的作用域，也就是目标类
+student::student(){
+    no = 0;
+    name = "null";
+    for(int i = 0; i < 3;i++){
+        score[i] = 0;
+    }
+}
+
+int main(){
+    student s1;  // 定义对象的同时，构造函数自动调用
+    return 0;
+}
+```
+
+### 析构函数
+
+与类同名，但是在函数前加上～。用于类对象生命期结束时回收对象。没有返回值和参数。只能有一个不能被重载。也可以在类外调用
+
+```c++
+class X{
+    ~X(){
+        cout << "Destroy\n" << endl;
+    }
+}
+```
+
+## 2. 函数重载
+
+编译时的多态。函数名相同，但是传入的参数不同。
+
+```c++
+#include <iostream>
+
+using namespace std;
+
+void func(int a){
+    count << "func1" << endl;
+}
+
+void func(int a, float b){
+    count << "func2" << endl;
+}
+
+int main(){
+    func(1);
+    func(1, 1.1);
+    return 0;
+}
+```
+
+底层原理：
+
+编译器实际将重载的同名函数进行名字碾碎成不同名，用于区分
+
+```
+void func(int i){}
+编译后，名字变为Z4funci，4为函数名长度，后面func为函数名，i为参数类型int
+void func(int i, int j){}
+编译后，变为Z4funcii，因为有两个int类型的参数
+```
+
+## 3. C++代码运行过程
+
+`.c .cpp`----预处理---->>`.i`----编译---->>`.s`----汇编---->>`.o`----链接---->>`.exe .out`
+
+预处理：展开宏定义，删除注释等
+
+编译：生成汇编语言
+
+汇编：生成机器语言，.o是二进制文件
+
+链接：生成可执行文件
+
+## 4. new和malloc的区别
+
+```
+    malloc/free是库函数，需要头文件支持。
+
+    new操作符申请内存分配时无须指定内存块的大小，编译器会根据类型信息自行计算。
+
+    而malloc则需要显式地指出所需内存的尺寸。
+
+    new操作符内存分配成功时，返回的是对象类型的指针，类型严格与对象匹配，无须进行类型转换，故new是符合类型安全性的操作符。
+
+    而malloc内存分配成功则是返回void * ，需要通过强制类型转换将void*指针转换成我们需要的类型。
+
+    new内存分配失败时，会抛出bac_alloc异常。
+
+    malloc分配内存失败时返回NULL。
+
+    C++允许重载new/delete操作符，
+
+    而malloc不允许重载。
+
+    new操作符从自由存储区（free store）上为对象动态分配内存空间，
+
+    而malloc函数从堆上动态分配内存。
+
+    自由存储区是C++基于new操作符的一个抽象概念，凡是通过new操作符进行内存申请，该内存即为自由存储区。而堆是操作系统中的术语，是操作系统所维护的一块特殊内存，用于程序的内存动态分配，C语言使用malloc从堆上分配内存，使用free释放已分配的对应内存。自由存储区不等于堆，如上所述，布局new就可以不位于堆中。
+```
+
+
+
+## 5. this指针
+
+this指针是每个类内的成员函数默认的参数，保存对象的地址。
+
+```c++
+class CTest{
+public:
+    // 返回值为CTest对象指针的函数
+    CTest* mumber_func(){
+        // this保存当前对象的地址
+        return this;
+    }
+}
+```
+
