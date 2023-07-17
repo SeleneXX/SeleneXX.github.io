@@ -523,7 +523,7 @@ print(obj1.send(7))					# send方法传入一个数据代替刚刚停在的yield
 
 ### 可迭代对象：
 
-一个类中有`__inter__`方法并且该方法返回一个迭代器对象，则称这个类为可迭代对象，可以被for循环。
+一个类中有`__iter__`方法并且该方法返回一个迭代器对象，则称这个类为可迭代对象，可以被for循环。
 
 ```python
 class Foo(object):
@@ -1004,7 +1004,6 @@ python创建进程的三大模式：
   import threading
   
   def task(arg):
-      # 获取当前进程(getpid)和父进程(getppid)的id
       print(threading.enumerate())
       
   if __name__ = "__main__":
@@ -1013,7 +1012,7 @@ python创建进程的三大模式：
       p = multiprocessing.Process(target=task, args=("xxx",))
       p.start()
   ```
-
+  
 - 自定义进程类，直接将进程需要做的事写进run方法
 
   ```python
@@ -1443,7 +1442,7 @@ await后面跟可等待的对象（例如IO等待）。
 
 - 协程对象
 - future对象
-- task对象
+- task对象：对协程对象的进一步封装，包含了任务的各个状态
 
 ```python
 async def func():
