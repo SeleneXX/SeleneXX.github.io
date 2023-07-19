@@ -1362,10 +1362,12 @@ async def fetch(session, url):
           	file_object.write(content)
       
 async def main():
+    # 协程从连接池获取一个连接session
     async with aiohttp.ClientSession() as session:
         url_list = [
           'xxxxxx'
         ]
+        创建任务对象，
         tasks = [asyncio.create_task(fetch(session, url)) for url in url_list]
         await asyncio.wait(tasks)
     
@@ -2014,3 +2016,12 @@ conn.close()
 tel.close()
 ```
 
+### 同步，异步（客户端）：
+
+针对请求的客户端和请求的连接来说的，客户端有一个请求的连接，请求服务端执行某个时间很长的任务。在同步的状态下，连接就要处于一直等待的状态下；在异步的状态下，连接可以直接返回，客户端不需要等待（没有真正得到服务端的传来的结果，后续需要消息回写额接口）。
+
+### 阻塞，非阻塞（服务端）：
+
+针对服务端的请求线程。客户端查询一个大数据，对于服务端，可以理解为请求的线程，实际查询数据库的线程是处理线程。在阻塞的情况下，请求线程不能做其他事情，一直处于等待状态；在非阻塞情况下，请求的线程不需要一直等待，可以放回资源池，处理其他的请求
+
+（每隔一定时间，要去轮询一下处理线程，检查是否完成，如果完成就拿到结果返回客户端）。
